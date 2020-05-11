@@ -35,6 +35,9 @@ module.exports = class Logger {
 
   write(logFilePath, dateObj, text) {
     const fd = fs.openSync(logFilePath, "a"); // append (create if does not exist)
-    fs.writeSync(fd, `${dateObj.toString()} - ${text}\n`);
+    const dateStr = dateObj.toLocaleString('en-US', { timeZone: "America/New_York"}); 
+    const isoStr = new Date(dateStr).toISOString().slice(0, -5);
+
+    fs.writeSync(fd, `EST ${isoStr} - ${text}\n`);
   }
 };
