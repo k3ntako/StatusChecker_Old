@@ -8,6 +8,7 @@ module.exports = class Logger {
     const [logDirectoryPath, logFilePath] = paths;
 
     this.createLogDirectory(logDirectoryPath);
+    this.grantWritePermission(logFilePath);
     this.write(logFilePath, dateObj, text);
   }
 
@@ -16,15 +17,20 @@ module.exports = class Logger {
     const month = dateObj.getMonth() + 1; // month is 0 to 11
     const year = dateObj.getFullYear();
 
-    const logDirectoryPath = `../logs/${year}_${month}`;
+    const logDirectoryPath = `/srv/StatusChecker/logs/${year}_${month}`;
     const logFilePath = logDirectoryPath + `/${date}.log`;
     return [logDirectoryPath, logFilePath];
   }
 
   createLogDirectory(logDirectoryPath) {
     if (!fs.existsSync(logDirectoryPath)) {
+      console.log('attempt to make' + logDirectoryPath);
       fs.mkdirSync(logDirectoryPath, { recursive: true });
     }
+  }
+  
+  grantWritePermission(logFilePath){
+    fs.chmodSync(logFilePath, 0o777);
   }
 
   write(logFilePath, dateObj, text) {
