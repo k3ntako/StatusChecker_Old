@@ -1,4 +1,6 @@
 const fs = require("fs");
+const path = require("path");
+const moment = require("moment-timezone");
 
 module.exports = class Logger {
   constructor(rootPath) {
@@ -12,7 +14,8 @@ module.exports = class Logger {
     const [logDirectoryPath, logFilePath] = paths;
 
     this.createLogDirectory(logDirectoryPath);
-    this.grantWritePermission(logFilePath);
+    // this.grantWritePermission(logFilePath);
+
     this.write(logFilePath, dateObj, text);
   }
 
@@ -31,20 +34,24 @@ module.exports = class Logger {
 
   createLogDirectory(logDirectoryPath) {
     if (!fs.existsSync(logDirectoryPath)) {
-      console.log('attempt to make' + logDirectoryPath);
       fs.mkdirSync(logDirectoryPath, { recursive: true });
     }
   }
-  
-  grantWritePermission(logFilePath){
+
+  grantWritePermission(logFilePath) {
     fs.chmodSync(logFilePath, 0o777);
   }
 
   write(logFilePath, dateObj, text) {
-    const fd = fs.openSync(logFilePath, "a"); // append (create if does not exist)
-    const dateStr = dateObj.toLocaleString('en-US', { timeZone: "America/New_York"}); 
-    const isoStr = new Date(dateStr).toISOString().slice(0, -5);
+    const fd = fs.openSync(logFilePath, "as"); // append synchronously (create if does not exist)
 
-    fs.writeSync(fd, `EST ${isoStr} - ${text}\n`);
+    const dateStr = moment(dateObj)
+      .tz("America/New_York")
+      .format("YYYY-MM-D hh:mm:ss.SSS A");
+
+    const logText = `${dateStr} - ${text}`;
+
+    console.log(logText);
+    fs.writeSync(fd, logText + "\n");
   }
 };
