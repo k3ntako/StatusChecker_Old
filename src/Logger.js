@@ -23,8 +23,6 @@ module.exports = class Logger {
     const [logDirectoryPath, logFilePath] = paths;
 
     this.createLogDirectory(logDirectoryPath);
-    // this.grantWritePermission(logFilePath);
-
     this.write(logFilePath, dateObj, text, stack);
   }
 
@@ -45,10 +43,6 @@ module.exports = class Logger {
     if (!fs.existsSync(logDirectoryPath)) {
       fs.mkdirSync(logDirectoryPath, { recursive: true });
     }
-  }
-
-  grantWritePermission(logFilePath) {
-    fs.chmodSync(logFilePath, 0o777);
   }
 
   write(logFilePath, dateObj, text, stack) {
