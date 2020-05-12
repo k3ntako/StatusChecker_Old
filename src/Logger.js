@@ -17,19 +17,19 @@ module.exports = class Logger {
       stack = null;
     }
 
-    const dateObj = new Date();
-    const paths = this.generateLogPath(dateObj);
+    const momentDate = moment().tz("America/New_York");
+    const paths = this.generateLogPath(momentDate);
 
     const [logDirectoryPath, logFilePath] = paths;
 
     this.createLogDirectory(logDirectoryPath);
-    this.write(logFilePath, dateObj, text, stack);
+    this.write(logFilePath, momentDate, text, stack);
   }
 
-  generateLogPath(dateObj) {
-    const date = dateObj.getDate();
-    const month = dateObj.getMonth() + 1; // month is 0 to 11
-    const year = dateObj.getFullYear();
+  generateLogPath(momentDate) {
+    const date = momentDate.date();
+    const month = momentDate.month() + 1; // month is 0 to 11
+    const year = momentDate.year();
 
     const logDirectoryPath = path.resolve(
       this.rootPath,
@@ -45,12 +45,10 @@ module.exports = class Logger {
     }
   }
 
-  write(logFilePath, dateObj, text, stack) {
+  write(logFilePath, momentDate, text, stack) {
     const fd = fs.openSync(logFilePath, "as"); // append synchronously (create if does not exist)
 
-    const dateStr = moment(dateObj)
-      .tz("America/New_York")
-      .format("YYYY-MM-D hh:mm:ss.SSS A");
+    const dateStr = momentDate.format("YYYY-MM-D hh:mm:ss.SSS A zz");
 
     let logText = `${dateStr} - ${text}`;
     if (stack) {
