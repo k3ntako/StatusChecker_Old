@@ -2,8 +2,9 @@ const fetch = require("node-fetch");
 const Email = require("./Email");
 
 module.exports = class StatusChecker {
-  constructor(logger) {
+  constructor(logger, errorHandler) {
     this.logger = logger;
+    this.errorHandler = errorHandler;
   }
 
   async start() {
@@ -14,14 +15,33 @@ module.exports = class StatusChecker {
     try {
       const response = await this.pingServer();
 
-      if (!response || response.isServerConnected !== true) {
-        throw new Error("Invalid response");
+      if (!response) {
+        return await this.errorHandler.handleError(
+          new Error("Received no response")
+        );
       }
 
-      this.handleSuccess(response);
+      const body = await this.parseBody(response);
+
+      if (response.status !== 200 || !body || body.isServerConnected !== true) {
+        return await this.errorHandler.handleErrorWithResponse(response, body);
+      }
+
+      this.handleSuccess(body);
     } catch (err) {
-      await this.handleError(err);
+      await this.errorHandler.handleError(err);
     }
+  }
+
+  async parseBody(response) {
+    try {
+      const body = await response.json();
+      return body;
+    } catch (error) {
+      this.logger.log(error);
+    }
+
+    return null;
   }
 
   async pingServer() {
@@ -35,21 +55,12 @@ module.exports = class StatusChecker {
       return fetch(process.env.url).then(resolve, reject);
     });
 
-    const response = await promise;
-
     clearTimeout(timeout);
 
-    return await response.json();
+    return await promise;
   }
 
   async handleSuccess(response) {
     this.logger.log(`Response body: ${JSON.stringify(response)}`);
-  }
-
-  async handleError(err) {
-    this.logger.log(`Error: ${err.message}`);
-
-    const email = new Email(err);
-    await email.sendErrorEmail();
   }
 };

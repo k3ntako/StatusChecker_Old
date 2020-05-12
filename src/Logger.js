@@ -7,7 +7,16 @@ module.exports = class Logger {
     this.rootPath = rootPath;
   }
 
-  log(text) {
+  log(message) {
+    let text, stack;
+    if (message instanceof Error) {
+      text = message;
+      stack = message.stack;
+    } else {
+      text = message;
+      stack = null;
+    }
+
     const dateObj = new Date();
     const paths = this.generateLogPath(dateObj);
 
@@ -16,7 +25,7 @@ module.exports = class Logger {
     this.createLogDirectory(logDirectoryPath);
     // this.grantWritePermission(logFilePath);
 
-    this.write(logFilePath, dateObj, text);
+    this.write(logFilePath, dateObj, text, stack);
   }
 
   generateLogPath(dateObj) {
@@ -42,14 +51,17 @@ module.exports = class Logger {
     fs.chmodSync(logFilePath, 0o777);
   }
 
-  write(logFilePath, dateObj, text) {
+  write(logFilePath, dateObj, text, stack) {
     const fd = fs.openSync(logFilePath, "as"); // append synchronously (create if does not exist)
 
     const dateStr = moment(dateObj)
       .tz("America/New_York")
       .format("YYYY-MM-D hh:mm:ss.SSS A");
 
-    const logText = `${dateStr} - ${text}`;
+    let logText = `${dateStr} - ${text}`;
+    if (stack) {
+      logText += `\n ${stack}`;
+    }
 
     console.log(logText);
     fs.writeSync(fd, logText + "\n");

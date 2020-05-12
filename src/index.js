@@ -4,15 +4,25 @@ const envPath = path.resolve(rootPath, ".env");
 
 require("dotenv").config({ path: envPath });
 
+const Logger = require("./Logger");
+const StatusChecker = require("./StatusChecker");
+const ErrorHandler = require("./ErrorHandler");
+
 (async () => {
-  const Logger = require("./Logger");
-  const StatusChecker = require("./StatusChecker");
-
   const logger = new Logger(rootPath);
-  logger.log("Starting StatusChecker...");
 
-  const statusChecker = new StatusChecker(logger);
-  await statusChecker.start();
+  try {
+    logger.log("Starting StatusChecker...");
 
-  logger.log("Finished StatusChecker");
+    const errorHandler = new ErrorHandler(logger);
+    const statusChecker = new StatusChecker(logger, errorHandler);
+    await statusChecker.start();
+  } catch (error) {
+    logger.log(error);
+
+    const email = new Email(error.message, error.stack);
+    await email.sendErrorEmail();
+  } finally {
+    logger.log("Finished StatusChecker");
+  }
 })();
