@@ -1,6 +1,10 @@
 const fs = require("fs");
 
 module.exports = class Logger {
+  constructor(rootPath) {
+    this.rootPath = rootPath;
+  }
+
   log(text) {
     const dateObj = new Date();
     const paths = this.generateLogPath(dateObj);
@@ -17,7 +21,10 @@ module.exports = class Logger {
     const month = dateObj.getMonth() + 1; // month is 0 to 11
     const year = dateObj.getFullYear();
 
-    const logDirectoryPath = `/srv/StatusChecker/logs/${year}_${month}`;
+    const logDirectoryPath = path.resolve(
+      this.rootPath,
+      `logs/${year}_${month}`
+    );
     const logFilePath = logDirectoryPath + `/${date}.log`;
     return [logDirectoryPath, logFilePath];
   }

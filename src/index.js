@@ -1,10 +1,18 @@
-require("dotenv").config({ path: "/srv/StatusChecker/.env"  });
+const path = require("path");
+const rootPath = path.resolve(path.dirname(require.main.filename), "../");
+const envPath = path.resolve(rootPath, ".env");
 
-const Logger = require("./Logger");
-const StatusChecker = require("./StatusChecker");
+require("dotenv").config({ path: envPath });
 
-console.log("Starting StatusChecker...");
+(async () => {
+  const Logger = require("./Logger");
+  const StatusChecker = require("./StatusChecker");
 
-const logger = new Logger();
-const statusChecker = new StatusChecker(logger);
-statusChecker.start();
+  const logger = new Logger(rootPath);
+  logger.log("Starting StatusChecker...");
+
+  const statusChecker = new StatusChecker(logger);
+  await statusChecker.start();
+
+  logger.log("Finished StatusChecker");
+})();
