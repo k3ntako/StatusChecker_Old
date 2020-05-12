@@ -7,7 +7,7 @@ module.exports = class StatusChecker {
   }
 
   async start() {
-    this.checkStatus();
+    await this.checkStatus();
   }
 
   async checkStatus() {
@@ -25,7 +25,19 @@ module.exports = class StatusChecker {
   }
 
   async pingServer() {
-    const response = await fetch(process.env.url);
+    let timeout;
+    const promise = new Promise((resolve, reject) => {
+      timeout = setTimeout(
+        () => reject(new Error("Fetch timed out after 5 seconds")),
+        5000
+      );
+
+      return fetch(process.env.url).then(resolve, reject);
+    });
+
+    const response = await promise;
+
+    clearTimeout(timeout);
 
     return await response.json();
   }
@@ -35,6 +47,8 @@ module.exports = class StatusChecker {
   }
 
   async handleError(err) {
+    this.logger.log(`Error: ${err.message}`);
+
     const email = new Email(err);
     await email.sendErrorEmail();
   }
